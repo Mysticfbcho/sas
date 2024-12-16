@@ -1,0 +1,75 @@
+from web3 import Web3
+
+# Connect to BSC via an RPC provider
+bsc_rpc_url = 'https://bsc-dataseed.binance.org:443'  # Replace with your RPC URL if needed
+w3 = Web3(Web3.HTTPProvider(bsc_rpc_url))
+
+# Check if connected to BSC
+if w3.isConnected():
+    print("Successfully connected to Binance Smart Chain!")
+else:
+    print("Failed to connect to Binance Smart Chain.")
+
+# Define the contract address and ABI (Application Binary Interface)
+contract_address = '0xYourContractAddressHere'  # Replace with the contract address
+contract_abi = [
+    # Replace with the actual ABI of the contract
+    {
+        "constant": True,
+        "inputs": [],
+        "name": "name",
+        "outputs": [{"name": "", "type": "string"}],
+        "payable": False,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    # Add more functions and events from the contract ABI as needed
+]
+
+# Create the contract object
+contract = w3.eth.contract(address=contract_address, abi=contract_abi)
+
+# Example: Read data from the contract (e.g., get the name of the token)
+def get_name():
+    try:
+        name = contract.functions.name().call()
+        print("Contract Name:", name)
+    except Exception as e:
+        print("Error reading contract:", e)
+
+# Call the function
+get_name()
+
+# Example: Send a transaction to the contract (e.g., transferring tokens)
+def send_transaction(from_address, private_key, to_address, amount):
+    try:
+        # Prepare the transaction
+        nonce = w3.eth.getTransactionCount(from_address)
+        gas_price = w3.eth.gas_price
+        gas_limit = 200000  # Adjust as needed
+        
+        # Build the transaction
+        tx = contract.functions.transfer(to_address, amount).buildTransaction({
+            'chainId': 56,  # Binance Smart Chain mainnet chain ID
+            'gas': gas_limit,
+            'gasPrice': gas_price,
+            'nonce': nonce
+        })
+        
+        # Sign the transaction
+        signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+        
+        # Send the transaction
+        tx_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+        print(f"Transaction sent! Hash: {tx_hash.hex()}")
+    except Exception as e:
+        print(f"Error sending transaction: {e}")
+
+# Replace these values with your details
+from_address = '0xYourAddressHere'
+private_key = '0xYourPrivateKeyHere'  # Never share your private key in public!
+to_address = '0xRecipientAddressHere'
+amount = 1000000000000000000  # Amount to send (e.g., 1 token if using 18 decimals)
+
+# Uncomment to send a transaction (be careful with private keys)
+# send_transaction(from_address, private_key, to_address, amount)
